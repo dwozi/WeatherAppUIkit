@@ -9,6 +9,7 @@ import UIKit
 protocol SearchStackViewDelegate : AnyObject{
     func didFetchWeather(_ searchStackView: SearchStackView,weatherModel: WeatherModel)
     func didFailWithError(_ searcStackView: SearchStackView,error: ServiceError)
+    func updationLocation(_ searchStackView:SearchStackView)
 }
 class SearchStackView : UIStackView{
     //MARK: - Properties
@@ -47,6 +48,7 @@ extension SearchStackView{
         locationButton.contentVerticalAlignment = .fill
         locationButton.contentHorizontalAlignment = .fill
         locationButton.layer.cornerRadius = 40/2
+        locationButton.addTarget(self, action: #selector(handleLocationButton), for: .touchUpInside)
         
         //SearchButton style
         
@@ -97,6 +99,10 @@ extension SearchStackView{
     @objc private func handleSearchButton(_ sender: UIButton){
         self.searchTextField.endEditing(true)
     }
+    
+    @objc private func handleLocationButton(_ sender: UIButton){
+        self.delegate?.updationLocation(self)
+    }
 }
 
 //MARK: - UITextFieldDelegate
@@ -116,7 +122,7 @@ extension SearchStackView : UITextFieldDelegate{
     }
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let cityName = searchTextField.text else {return}
-        service.fetchWeather(forcityName: cityName) { result in
+        service.fetchWeatherCityName(forcityName: cityName) { result in
             switch result {
             case .success(let success):
                 self.delegate?.didFetchWeather(self, weatherModel: success)

@@ -29,6 +29,8 @@ class HomeViewController : UIViewController{
     
     
     private let locationManager = CLLocationManager()
+    
+    private let weatherService = WeatherService()
    
     
     
@@ -147,6 +149,19 @@ extension HomeViewController{
         print(viewModel.id)
        
     }
+    private func showErrorAlert(forErrormessage message: String){
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default))
+        self.present(alert, animated: true)
+    }
+    private func parseError(error: ServiceError){
+        switch error {
+        case .serverError:
+            showErrorAlert(forErrormessage: error.rawValue)
+        case .decodingError:
+            showErrorAlert(forErrormessage: error.rawValue)
+        }
+    }
     
 }
 
@@ -155,24 +170,29 @@ extension HomeViewController : CLLocationManagerDelegate{
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let location = locations.last!
-        print(location.coordinate.latitude)
-        print(location.coordinate.longitude)
         locationManager.stopUpdatingLocation()
+        self.weatherService.fetchWeatherLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude) { result in
+            switch result {
+            case .success(let success):
+                self.viewModel = WeatherViewModel(weatherModel: success)
+            case .failure(let failure):
+                self.parseError(error: failure)
+            }
+        }
     }
 }
 
-//MARK: - SearchStackViewDelegate
+//MARK: - PROTOCOL SearchStackViewDelegate
 extension HomeViewController : SearchStackViewDelegate{
+    func updationLocation(_ searchStackView: SearchStackView) {
+        self.locationManager.startUpdatingLocation()
+    }
+    
     func didFetchWeather(_ searchStackView: SearchStackView, weatherModel: WeatherModel) {
         self.viewModel = WeatherViewModel(weatherModel: weatherModel)
     }
     func didFailWithError(_ searcStackView: SearchStackView, error: ServiceError) {
-        switch error {
-        case .serverError:
-            print("Server error")
-        case .decodingError:
-            print("Decoding error")
-        }
+        parseError(error: error)
     }
     
     
