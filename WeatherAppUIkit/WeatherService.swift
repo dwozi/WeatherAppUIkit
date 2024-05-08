@@ -19,15 +19,17 @@ struct WeatherService{
     func fetchWeather(forcityName cityName: String, completion: @escaping(Result<WeatherModel,ServiceError>)->Void){
         let url = URL(string: "\(url)&q=\(cityName)")!
         URLSession.shared.dataTask(with: url) { data, response, error in
-            if error != nil{
-                completion(.failure(.serverError))
+            DispatchQueue.main.async {
+                if error != nil{
+                    completion(.failure(.serverError))
+                }
+                guard let data = data else {return}
+                guard let result = parseJSON(data: data) else {
+                    completion(.failure(.decodingError))
+                    return
+                }
+                completion(.success(result))
             }
-            guard let data = data else {return}
-            guard let result = parseJSON(data: data) else {
-                completion(.failure(.decodingError))
-                return
-            }
-            completion(.success(result))
             
         }.resume()
     }

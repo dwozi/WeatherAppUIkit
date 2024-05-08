@@ -11,6 +11,12 @@ import CoreLocation
 
 class HomeViewController : UIViewController{
    //MARK: - Properties
+    var viewModel : WeatherViewModel?{
+        didSet{
+            configure()
+        }
+    }
+    
     private let backgroundsImageView = UIImageView()
    
     
@@ -63,7 +69,7 @@ extension HomeViewController{
         //statusImageView
         statusImageView.translatesAutoresizingMaskIntoConstraints = false
         statusImageView.image = UIImage(systemName: "sun.max")
-        statusImageView.tintColor = .systemYellow
+        statusImageView.tintColor = .label
         
         
         //TemperatureLabel
@@ -132,6 +138,16 @@ extension HomeViewController{
         
     }
     
+    private func configure(){
+        guard let viewModel = self.viewModel else {return}
+      
+        self.cityLabel.text = viewModel.city
+        self.temperatureLabel.attributedText = attributedText(with: viewModel.temperatureString!)
+        self.statusImageView.image = UIImage(systemName: viewModel.statusName)
+        print(viewModel.id)
+       
+    }
+    
 }
 
 //MARK: - CLocationManagerDelete
@@ -148,7 +164,7 @@ extension HomeViewController : CLLocationManagerDelegate{
 //MARK: - SearchStackViewDelegate
 extension HomeViewController : SearchStackViewDelegate{
     func didFetchWeather(_ searchStackView: SearchStackView, weatherModel: WeatherModel) {
-        print(weatherModel.main.temp)
+        self.viewModel = WeatherViewModel(weatherModel: weatherModel)
     }
     func didFailWithError(_ searcStackView: SearchStackView, error: ServiceError) {
         switch error {
