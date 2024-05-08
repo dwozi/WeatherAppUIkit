@@ -52,6 +52,7 @@ extension HomeViewController{
         stackView.spacing = 5
         stackView.axis = .horizontal
         stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.delegate = self
        
         //GeneralStackView
         generalStackView.spacing = 2
@@ -142,4 +143,21 @@ extension HomeViewController : CLLocationManagerDelegate{
         print(location.coordinate.longitude)
         locationManager.stopUpdatingLocation()
     }
+}
+
+//MARK: - SearchStackViewDelegate
+extension HomeViewController : SearchStackViewDelegate{
+    func didFetchWeather(_ searchStackView: SearchStackView, weatherModel: WeatherModel) {
+        print(weatherModel.main.temp)
+    }
+    func didFailWithError(_ searcStackView: SearchStackView, error: ServiceError) {
+        switch error {
+        case .serverError:
+            print("Server error")
+        case .decodingError:
+            print("Decoding error")
+        }
+    }
+    
+    
 }

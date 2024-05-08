@@ -6,8 +6,13 @@
 //
 
 import UIKit
+protocol SearchStackViewDelegate : AnyObject{
+    func didFetchWeather(_ searchStackView: SearchStackView,weatherModel: WeatherModel)
+    func didFailWithError(_ searcStackView: SearchStackView,error: ServiceError)
+}
 class SearchStackView : UIStackView{
     //MARK: - Properties
+    weak var delegate : SearchStackViewDelegate?
     private let locationButton = UIButton(type: .system)
     private let searchButton = UIButton(type: .system)
     private let searchTextField = UITextField()
@@ -60,6 +65,7 @@ extension SearchStackView{
         searchTextField.borderStyle = .roundedRect
         searchTextField.textAlignment = .natural
         searchTextField.backgroundColor = .systemFill
+        searchTextField.delegate = self
 
     }
     
@@ -89,13 +95,36 @@ extension SearchStackView{
 //MARK: - Selector
 extension SearchStackView{
     @objc private func handleSearchButton(_ sender: UIButton){
-        service.fetchWeather(forcityName: "london") { result in
+        self.searchTextField.endEditing(true)
+    }
+}
+
+//MARK: - UITextFieldDelegate
+extension SearchStackView : UITextFieldDelegate{
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        print("Tıklandi")
+        return self.searchTextField.endEditing(true)
+    }
+    
+    func textFieldShouldEndEditing(_ textField: UITextField) -> Bool {
+        if searchTextField.text != ""{
+            return true
+        }else{
+            searchTextField.placeholder = "Search"
+            return false
+        }
+    }
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        guard let cityName = searchTextField.text else {return}
+        service.fetchWeather(forcityName: cityName) { result in
             switch result {
             case .success(let success):
-                print(success.main.temp)
+                self.delegate?.didFetchWeather(self, weatherModel: success)
             case .failure(let failure):
                 print(failure)
+                self.delegate?.didFailWithError(self, error: failure)
             }
         }
+        searchTextField.text = ""
     }
 }
